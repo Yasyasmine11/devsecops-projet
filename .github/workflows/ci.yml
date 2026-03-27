@@ -20,10 +20,27 @@ jobs:
         with:
           file_or_dir: k8s-deployment.yaml
 
+  conftest-policy:
+    name: Conftest Policy Check
+    runs-on: ubuntu-latest
+    needs: lint-yaml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Conftest
+        run: |
+          curl -L https://github.com/open-policy-agent/conftest/releases/download/v0.46.0/conftest_0.46.0_Linux_x86_64.tar.gz -o conftest.tar.gz
+          tar xzf conftest.tar.gz
+          sudo mv conftest /usr/local/bin/
+
+      - name: Run Conftest on Kubernetes manifest
+        run: conftest test k8s-deployment.yaml --policy policy/
+
   build-and-scan:
     name: Build & Scan Docker Image
     runs-on: ubuntu-latest
-    needs: lint-yaml
+    needs: conftest-policy
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
